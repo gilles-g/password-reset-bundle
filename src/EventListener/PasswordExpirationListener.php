@@ -2,6 +2,7 @@
 
 namespace GillesG\PasswordExpirationBundle\EventListener;
 
+use GillesG\PasswordExpirationBundle\Service\PasswordExpirationChecker;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -18,6 +19,7 @@ class PasswordExpirationListener
     private TokenStorageInterface $tokenStorage;
     private UrlGeneratorInterface $urlGenerator;
     private FirewallMapInterface $firewallMap;
+    private PasswordExpirationChecker $expirationChecker;
 
     public function __construct(
         int $lifetimeDays,
@@ -27,7 +29,8 @@ class PasswordExpirationListener
         string $firewallName,
         TokenStorageInterface $tokenStorage,
         UrlGeneratorInterface $urlGenerator,
-        FirewallMapInterface $firewallMap
+        FirewallMapInterface $firewallMap,
+        PasswordExpirationChecker $expirationChecker
     ) {
         $this->lifetimeDays = $lifetimeDays;
         $this->redirectRoute = $redirectRoute;
@@ -37,6 +40,7 @@ class PasswordExpirationListener
         $this->tokenStorage = $tokenStorage;
         $this->urlGenerator = $urlGenerator;
         $this->firewallMap = $firewallMap;
+        $this->expirationChecker = $expirationChecker;
     }
 
     public function onKernelRequest(RequestEvent $event): void
@@ -73,23 +77,7 @@ class PasswordExpirationListener
 
         $user = $token->getUser();
 
-        // Check if user has the configured field
-        if (!method_exists($user, 'get' . ucfirst($this->userField))) {
-            return;
-        }
-
-        $getter = 'get' . ucfirst($this->userField);
-        $passwordUpdatedAt = $user->$getter();
-
-        if (!$passwordUpdatedAt instanceof \DateTimeInterface) {
-            return;
-        }
-
-        $now = new \DateTime();
-        $expirationDate = clone $passwordUpdatedAt;
-        $expirationDate->modify('+' . $this->lifetimeDays . ' days');
-
-        if ($now > $expirationDate) {
+        if ($this->expirationChecker->isPasswordExpired($user, $this->userField, $this->lifetimeDays)) {
             $url = $this->urlGenerator->generate($this->redirectRoute);
             $event->setResponse(new RedirectResponse($url));
         }
