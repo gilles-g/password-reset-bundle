@@ -4,6 +4,7 @@ namespace GillesG\PasswordExpirationBundle\Tests\Integration;
 
 use GillesG\PasswordExpirationBundle\EventListener\PasswordExpirationListener;
 use GillesG\PasswordExpirationBundle\Service\PasswordExpirationChecker;
+use GillesG\PasswordExpirationBundle\Service\PasswordHistoryChecker;
 use GillesG\PasswordExpirationBundle\Tests\Integration\Stubs\Kernel as KernelStub;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -69,5 +70,13 @@ class KernelTest extends KernelTestCase
 
         $checker = self::getContainer()->get(PasswordExpirationChecker::class);
         self::assertInstanceOf(PasswordExpirationChecker::class, $checker);
+    }
+
+    public function testPasswordHistoryCheckerService(): void
+    {
+        self::bootKernel(['config' => 'minimal']);
+
+        $checker = self::getContainer()->get(PasswordHistoryChecker::class);
+        self::assertInstanceOf(PasswordHistoryChecker::class, $checker);
     }
 }

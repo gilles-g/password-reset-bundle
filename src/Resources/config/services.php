@@ -9,12 +9,14 @@ use GillesG\PasswordExpirationBundle\Service\PasswordHistoryChecker;
 return static function (ContainerConfigurator $container) {
     $services = $container->services();
 
-    $services->set(PasswordExpirationChecker::class);
+    $services->set(PasswordExpirationChecker::class)
+        ->public();
 
     $services->set(PasswordHistoryChecker::class)
         ->args([
             service('security.password_hasher_factory')
-        ]);
+        ])
+        ->public();
 
     $services->set(PasswordExpirationListener::class)
         ->args([
