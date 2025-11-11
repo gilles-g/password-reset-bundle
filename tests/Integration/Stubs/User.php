@@ -2,15 +2,17 @@
 
 namespace GillesG\PasswordExpirationBundle\Tests\Integration\Stubs;
 
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-class User implements UserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     private ?int $id = null;
     private string $username = 'testuser';
     private string $password = 'hashed_password';
     private array $roles = ['ROLE_USER'];
     private ?\DateTimeInterface $passwordUpdatedAt = null;
+    private array $passwordHistory = [];
 
     public function getId(): ?int
     {
@@ -69,6 +71,17 @@ class User implements UserInterface
     public function setPasswordUpdatedAt(?\DateTimeInterface $passwordUpdatedAt): self
     {
         $this->passwordUpdatedAt = $passwordUpdatedAt;
+        return $this;
+    }
+
+    public function getPasswordHistory(): array
+    {
+        return $this->passwordHistory;
+    }
+
+    public function setPasswordHistory(array $passwordHistory): self
+    {
+        $this->passwordHistory = $passwordHistory;
         return $this;
     }
 

@@ -4,11 +4,17 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use GillesG\PasswordExpirationBundle\EventListener\PasswordExpirationListener;
 use GillesG\PasswordExpirationBundle\Service\PasswordExpirationChecker;
+use GillesG\PasswordExpirationBundle\Service\PasswordHistoryChecker;
 
 return static function (ContainerConfigurator $container) {
     $services = $container->services();
 
     $services->set(PasswordExpirationChecker::class);
+
+    $services->set(PasswordHistoryChecker::class)
+        ->args([
+            service('security.password_hasher_factory')
+        ]);
 
     $services->set(PasswordExpirationListener::class)
         ->args([
