@@ -50,6 +50,31 @@ class PasswordExpirationFactory implements AuthenticatorFactoryInterface
 
     public function createAuthenticator(ContainerBuilder $container, string $firewallName, array $config, string $userProviderId): string
     {
+        return $this->createListener($container, $firewallName, $config);
+    }
+
+    /**
+     * Legacy method for Symfony 5.4 compatibility.
+     * This method is called by older versions of Symfony that don't use the authenticator system.
+     *
+     * @deprecated This method is for backward compatibility only
+     */
+    public function create(ContainerBuilder $container, string $id, array $config, string $userProviderId, ?string $defaultEntryPoint): array
+    {
+        $listenerId = $this->createListener($container, $id, $config);
+        
+        return [
+            $userProviderId,
+            $listenerId,
+            $defaultEntryPoint,
+        ];
+    }
+
+    /**
+     * Creates the password expiration listener service
+     */
+    private function createListener(ContainerBuilder $container, string $firewallName, array $config): string
+    {
         $listenerId = 'password_expiration.listener.' . $firewallName;
 
         $container
