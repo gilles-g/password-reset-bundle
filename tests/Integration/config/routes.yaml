@@ -1,0 +1,11 @@
+password_change:
+    path: /password/change
+    controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController::templateAction
+
+logout:
+    path: /logout
+    controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController::templateAction
+
+home:
+    path: /
+    controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController::templateAction

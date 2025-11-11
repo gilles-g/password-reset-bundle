@@ -1,0 +1,47 @@
+{
+    "name": "gilles-g/password-expiration-bundle",
+    "description": "Symfony bundle to force users to change their password after a certain period",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gilles G"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "symfony/framework-bundle": "^6.0|^7.0",
+        "symfony/security-bundle": "^6.0|^7.0",
+        "symfony/http-kernel": "^6.0|^7.0",
+        "symfony/dependency-injection": "^6.0|^7.0",
+        "symfony/config": "^6.0|^7.0"
+    },
+    "require-dev": {
+        "symfony/phpunit-bridge": "^6.4|^7.0",
+        "symfony/yaml": "^6.0|^7.0",
+        "symfony/routing": "^6.0|^7.0",
+        "doctrine/orm": "^2.10|^3.0",
+        "doctrine/doctrine-bundle": "^2.0",
+        "symfony/browser-kit": "^6.0|^7.0",
+        "symfony/filesystem": "^6.0|^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GillesG\\PasswordExpirationBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "GillesG\\PasswordExpirationBundle\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": [
+            "vendor/bin/simple-phpunit"
+        ]
+    },
+    "minimum-stability": "stable"
+}
