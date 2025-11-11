@@ -45,6 +45,15 @@ security:
 - **`user_field`** (optional, string, default: `passwordUpdatedAt`): Name of the DateTime field in your User entity that stores when the password was last updated
 - **`excluded_routes`** (optional, array, default: `[]`): Array of route names that should be excluded from the password expiration check (useful for logout, password change routes, etc.)
 
+## Architecture
+
+The bundle provides a clean separation of concerns:
+
+- **`PasswordExpirationChecker`** - Service that handles password expiration logic
+- **`PasswordExpirationListener`** - Event listener that checks requests and triggers redirects
+- **`PasswordExpirationFactory`** - Factory that registers the firewall configuration option
+- **`PasswordExpirationExtension`** - Extension that loads the bundle services
+
 ## User Entity Requirements
 
 Your User entity must have a DateTime field that tracks when the password was last updated. The field name should match the `user_field` configuration option.
@@ -146,6 +155,23 @@ class PasswordChangeController extends AbstractController
     }
 }
 ```
+
+## Testing
+
+The bundle includes comprehensive tests:
+
+```bash
+composer install
+vendor/bin/phpunit
+```
+
+### Test Structure
+
+- **Integration Tests** - Boot real Symfony kernel with different configurations
+- **Unit Tests** - Test individual components like `PasswordExpirationChecker`
+- **DependencyInjection Tests** - Verify proper container configuration
+
+See the `tests/` directory for examples of how to test the bundle in your application.
 
 ## License
 
