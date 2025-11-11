@@ -1,0 +1,30 @@
+{
+    "name": "gilles-g/password-expiration-bundle",
+    "description": "Symfony bundle to force users to change their password after a certain period",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Gilles G"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "symfony/framework-bundle": "^5.0|^6.0|^7.0",
+        "symfony/security-bundle": "^5.0|^6.0|^7.0",
+        "symfony/http-kernel": "^5.0|^6.0|^7.0",
+        "symfony/dependency-injection": "^5.0|^6.0|^7.0",
+        "symfony/config": "^5.0|^6.0|^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GillesG\\PasswordExpirationBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "GillesG\\PasswordExpirationBundle\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable"
+}
