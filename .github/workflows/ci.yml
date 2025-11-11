@@ -3,11 +3,8 @@ name: "CI Tests"
 on:
   pull_request:
   push:
-    branches:
-      - main
 
 env:
-  fail-fast: true
   PHPUNIT_FLAGS: "-v"
   SYMFONY_DEPRECATIONS_HELPER: weak
 
@@ -35,9 +32,9 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: curl,mbstring,xdebug
+          extensions: curl,mbstring
           ini-values: date.timezone="UTC"
-          coverage: xdebug
+          coverage: none
           tools: "composer:v2,flex"
 
       - name: "Show PHP version"

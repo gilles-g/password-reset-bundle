@@ -53,7 +53,7 @@ class PasswordExpirationFactory implements AuthenticatorFactoryInterface
         $listenerId = 'password_expiration.listener.' . $firewallName;
 
         $container
-            ->setDefinition($listenerId, new ChildDefinition(PasswordExpirationListener::class))
+            ->setDefinition($listenerId, new ChildDefinition('GillesG\PasswordExpirationBundle\EventListener\PasswordExpirationListener'))
             ->replaceArgument(0, $config['lifetime_days'])
             ->replaceArgument(1, $config['redirect_route'])
             ->replaceArgument(2, $config['user_field'])

@@ -35,15 +35,28 @@ class PasswordExpirationCheckerTest extends TestCase
         self::assertTrue($isExpired);
     }
 
+    public function testPasswordNotExpiredExactlyAtBoundary(): void
+    {
+        $user = new User();
+        // Set to exactly 89 days and 23 hours ago - still within the 90-day window
+        $user->setPasswordUpdatedAt(new \DateTime('-89 days -23 hours'));
+
+        $isExpired = $this->checker->isPasswordExpired($user, 'passwordUpdatedAt', 90);
+
+        // Still within 90 days, so not expired
+        self::assertFalse($isExpired);
+    }
+
     public function testPasswordExactlyAtExpirationBoundary(): void
     {
         $user = new User();
+        // Set to exactly 90 days ago
         $user->setPasswordUpdatedAt(new \DateTime('-90 days'));
 
         $isExpired = $this->checker->isPasswordExpired($user, 'passwordUpdatedAt', 90);
 
-        // After exactly 90 days, the password should not be expired yet
-        self::assertFalse($isExpired);
+        // After 90 days have passed, the password is expired
+        self::assertTrue($isExpired);
     }
 
     public function testPasswordExpiredJustAfterBoundary(): void
