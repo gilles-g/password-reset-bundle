@@ -76,12 +76,4 @@ class User implements UserInterface
     {
         // Nothing to erase
     }
-
-    /**
-     * @deprecated since Symfony 5.3, use the new password hasher system
-     */
-    public function getSalt(): ?string
-    {
-        return null;
-    }
 }

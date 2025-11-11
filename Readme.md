@@ -2,6 +2,11 @@
 
 A Symfony bundle that forces users to change their password after a certain period.
 
+## Requirements
+
+- PHP 8.1 or higher
+- Symfony 6.0 or higher (6.4 and 7.x supported)
+
 ## Installation
 
 Install the bundle via Composer:
