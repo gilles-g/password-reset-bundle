@@ -301,6 +301,15 @@ Adds a password fingerprint to user's history with automatic rotation.
 - `$historyField`: (optional) The field name containing the password history array (default: 'passwordHistory')
 - `$maxHistory`: (optional) Maximum number of passwords to keep in history (default: 5)
 
+## Resetting Git History
+
+If you need to reset the git history of this repository while keeping all the code, see:
+
+- **[HOW_TO_RESET_GIT_HISTORY.md](HOW_TO_RESET_GIT_HISTORY.md)** - Detailed step-by-step guide
+- **[reset-git-history.sh](reset-git-history.sh)** - Automated script to reset history
+
+⚠️ **Warning**: Resetting git history requires force push and should be coordinated with your team!
+
 ## License
 
 MIT
