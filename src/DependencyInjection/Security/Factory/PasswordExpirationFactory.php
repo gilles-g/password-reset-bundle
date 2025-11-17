@@ -66,12 +66,7 @@ class PasswordExpirationFactory implements AuthenticatorFactoryInterface, Firewa
             ->replaceArgument(1, $config['redirect_route'])
             ->replaceArgument(2, $config['user_field'])
             ->replaceArgument(3, $config['excluded_routes'])
-            ->replaceArgument(4, $firewallName)
-            ->addTag('kernel.event_listener', [
-                'event' => 'kernel.request',
-                'method' => 'onKernelRequest',
-                'priority' => 7
-            ]);
+            ->replaceArgument(4, $firewallName);
 
         return [$listenerId];
     }
