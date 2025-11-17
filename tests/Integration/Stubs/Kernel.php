@@ -40,5 +40,15 @@ class Kernel extends BaseKernel
     public function registerContainerConfiguration(LoaderInterface $loader): void
     {
         $loader->load(\sprintf(__DIR__.'/../config/%s_config.yaml', $this->config));
+        
+        // Register test services
+        $loader->load(function ($container) {
+            $container->register(TestController::class)
+                ->setPublic(true)
+                ->setAutowired(false);
+            
+            $container->register('test_user_provider', TestUserProvider::class)
+                ->setPublic(true);
+        });
     }
 }
