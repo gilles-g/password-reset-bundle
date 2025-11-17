@@ -1,0 +1,21 @@
+framework:
+    test: true
+    secret: 'test_secret'
+    router:
+        resource: '%kernel.project_dir%/tests/Integration/config/routes.yaml'
+        utf8: true
+
+security:
+    providers:
+        test_provider:
+            memory:
+                users: []
+
+    firewalls:
+        main:
+            provider: test_provider
+            password_expiration:
+                lifetime_days: 90
+                redirect_route: password_change
+                user_field: passwordUpdatedAt
+                excluded_routes: ['password_change', 'logout']
