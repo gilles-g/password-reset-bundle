@@ -4,13 +4,14 @@ namespace GillesG\PasswordExpirationBundle\DependencyInjection\Security\Factory;
 
 use GillesG\PasswordExpirationBundle\EventListener\PasswordExpirationListener;
 use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\AuthenticatorFactoryInterface;
+use Symfony\Bundle\SecurityBundle\DependencyInjection\Security\Factory\FirewallListenerFactoryInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-class PasswordExpirationFactory implements AuthenticatorFactoryInterface
+class PasswordExpirationFactory implements AuthenticatorFactoryInterface, FirewallListenerFactoryInterface
 {
     public function getPriority(): int
     {
@@ -48,7 +49,14 @@ class PasswordExpirationFactory implements AuthenticatorFactoryInterface
         ;
     }
 
-    public function createAuthenticator(ContainerBuilder $container, string $firewallName, array $config, string $userProviderId): string
+    public function createAuthenticator(ContainerBuilder $container, string $firewallName, array $config, string $userProviderId): array
+    {
+        // This factory doesn't create authenticators, only listeners
+        // Return empty array to indicate no authenticators are registered
+        return [];
+    }
+
+    public function createListeners(ContainerBuilder $container, string $firewallName, array $config): array
     {
         $listenerId = 'password_expiration.listener.' . $firewallName;
 
@@ -65,6 +73,6 @@ class PasswordExpirationFactory implements AuthenticatorFactoryInterface
                 'priority' => 7
             ]);
 
-        return $listenerId;
+        return [$listenerId];
     }
 }
