@@ -27,7 +27,6 @@ return static function (ContainerConfigurator $container) {
             null, // $firewallName - will be set by factory
             service('security.token_storage'),
             service('router'),
-            service('security.firewall.map'),
             service(PasswordExpirationChecker::class)
         ])
         ->abstract();

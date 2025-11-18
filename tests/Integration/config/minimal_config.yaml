@@ -4,12 +4,14 @@ framework:
     router:
         resource: '%kernel.project_dir%/tests/Integration/config/routes.yaml'
         utf8: true
+    session:
+        handler_id: ~
+        storage_factory_id: session.storage.factory.mock_file
 
 security:
     providers:
         test_provider:
-            memory:
-                users: []
+            id: test_user_provider
 
     firewalls:
         main:

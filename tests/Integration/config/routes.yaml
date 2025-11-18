@@ -1,11 +1,11 @@
 password_change:
     path: /password/change
-    controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController::templateAction
+    controller: GillesG\PasswordExpirationBundle\Tests\Integration\Stubs\TestController::passwordChange
 
 logout:
     path: /logout
-    controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController::templateAction
+    controller: GillesG\PasswordExpirationBundle\Tests\Integration\Stubs\TestController::logout
 
 home:
     path: /
-    controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController::templateAction
+    controller: GillesG\PasswordExpirationBundle\Tests\Integration\Stubs\TestController::home
