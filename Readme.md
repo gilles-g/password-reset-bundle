@@ -62,6 +62,8 @@ security:
 
 The bundle provides a complete password reset functionality with customizable email templates.
 
+> **Note**: The default `PasswordResetManager` uses in-memory storage suitable for development and testing. For production use, you should extend it to persist tokens to a database (Doctrine), cache backend (Redis), or other persistent storage. See the "Production Token Storage" section below for details.
+
 ### Configuration
 
 Add password reset configuration to `config/packages/password_expiration.yaml`:
@@ -246,6 +248,99 @@ The following variables are available in your email templates:
 - **`user`**: The user object requesting the password reset
 - **`resetUrl`**: The complete password reset URL with token
 - **`expiresAt`**: DateTime object indicating when the token expires
+
+### Production Token Storage
+
+The default `PasswordResetManager` uses in-memory storage which is **not suitable for production**. For production environments, you should create a custom implementation that persists tokens to a database or cache backend.
+
+**Example with Doctrine:**
+
+```php
+<?php
+
+namespace App\Service;
+
+use App\Entity\PasswordResetToken as PasswordResetTokenEntity;
+use Doctrine\ORM\EntityManagerInterface;
+use GillesG\PasswordExpirationBundle\Model\PasswordResetToken;
+use GillesG\PasswordExpirationBundle\Service\PasswordResetManager as BasePasswordResetManager;
+
+class DoctrinePasswordResetManager extends BasePasswordResetManager
+{
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        int $tokenLifetimeSeconds = 3600
+    ) {
+        parent::__construct($tokenLifetimeSeconds);
+    }
+
+    public function generateToken(object $user): PasswordResetToken
+    {
+        $token = parent::generateToken($user);
+        
+        // Persist to database
+        $entity = new PasswordResetTokenEntity();
+        $entity->setSelector($token->getSelector());
+        $entity->setHashedVerifier(hash('sha256', $token->getToken()));
+        $entity->setExpiresAt($token->getExpiresAt());
+        $entity->setUser($user);
+        
+        $this->entityManager->persist($entity);
+        $this->entityManager->flush();
+        
+        return $token;
+    }
+
+    public function validateToken(string $selector, string $verifier): ?PasswordResetToken
+    {
+        $entity = $this->entityManager
+            ->getRepository(PasswordResetTokenEntity::class)
+            ->findOneBy(['selector' => $selector]);
+        
+        if (!$entity || $entity->getExpiresAt() < new \DateTime()) {
+            return null;
+        }
+        
+        $hashedVerifier = hash('sha256', $verifier);
+        if (!hash_equals($entity->getHashedVerifier(), $hashedVerifier)) {
+            return null;
+        }
+        
+        return new PasswordResetToken(
+            $verifier,
+            $selector,
+            $entity->getExpiresAt(),
+            $entity->getUser()
+        );
+    }
+
+    public function invalidateToken(string $selector): void
+    {
+        $entity = $this->entityManager
+            ->getRepository(PasswordResetTokenEntity::class)
+            ->findOneBy(['selector' => $selector]);
+        
+        if ($entity) {
+            $this->entityManager->remove($entity);
+            $this->entityManager->flush();
+        }
+    }
+}
+```
+
+**Register your custom manager:**
+
+```yaml
+# config/services.yaml
+services:
+    App\Service\DoctrinePasswordResetManager:
+        arguments:
+            $tokenLifetimeSeconds: 3600
+    
+    # Override the default manager
+    GillesG\PasswordExpirationBundle\Service\PasswordResetManager:
+        alias: App\Service\DoctrinePasswordResetManager
+```
 
 ## Architecture
 

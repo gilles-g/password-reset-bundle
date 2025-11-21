@@ -114,8 +114,8 @@ class PasswordResetManagerTest extends TestCase
 
     public function testTokenExpiration(): void
     {
-        // Create a manager with 1 second token lifetime
-        $shortManager = new PasswordResetManager(1);
+        // Create a manager with 0 second token lifetime for immediate expiration
+        $shortManager = new PasswordResetManager(0);
 
         $user = new \stdClass();
         $user->email = 'test@example.com';
@@ -124,8 +124,9 @@ class PasswordResetManagerTest extends TestCase
         $selector = $token->getSelector();
         $verifier = $token->getToken();
 
-        // Wait for token to expire
-        sleep(2);
+        // Token should be expired immediately due to 0 second lifetime
+        // Adding a small delay to ensure DateTime comparison difference
+        usleep(100000); // 0.1 second to ensure time has passed
 
         $result = $shortManager->validateToken($selector, $verifier);
         $this->assertNull($result);

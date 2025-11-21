@@ -4,6 +4,18 @@ namespace GillesG\PasswordExpirationBundle\Service;
 
 use GillesG\PasswordExpirationBundle\Model\PasswordResetToken;
 
+/**
+ * Password Reset Manager
+ * 
+ * Handles secure token generation, validation, and lifecycle management.
+ * 
+ * IMPORTANT: This implementation uses in-memory storage which is suitable for
+ * development and testing but NOT for production use. In production, tokens
+ * should be persisted to a database or cache backend.
+ * 
+ * For production use, you should extend this class or create your own
+ * implementation that persists tokens to Doctrine, Redis, or another storage backend.
+ */
 class PasswordResetManager
 {
     private array $tokens = [];
