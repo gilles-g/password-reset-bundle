@@ -45,7 +45,7 @@ class PasswordResetKernel extends BaseKernel
         
         // Register test services
         $loader->load(function ($container) {
-            $container->register('test_user_provider', TestUserProvider::class)
+            $container->register('test_user_provider', \GillesG\PasswordExpirationBundle\Tests\Integration\Stubs\TestUserProvider::class)
                 ->setPublic(true);
         });
     }
