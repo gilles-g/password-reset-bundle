@@ -1,6 +1,14 @@
 # Password Expiration Bundle
 
-A Symfony bundle that forces users to change their password after a certain period and prevents password reuse using fingerprint technology.
+A Symfony bundle that forces users to change their password after a certain period, prevents password reuse using fingerprint technology, and provides password reset functionality with customizable email templates.
+
+## Features
+
+- 🔒 **Password Expiration**: Automatically enforce password changes after a configurable period
+- 🔄 **Password History**: Prevent password reuse using secure fingerprint technology
+- 📧 **Password Reset**: Token-based password reset with customizable email templates
+- 🎨 **Customizable Templates**: Easily customize reset email content and design
+- 🔐 **Secure Tokens**: Cryptographically secure token generation using selector/verifier pattern
 
 ## Requirements
 
@@ -50,15 +58,212 @@ security:
 - **`user_field`** (optional, string, default: `passwordUpdatedAt`): Name of the DateTime field in your User entity that stores when the password was last updated
 - **`excluded_routes`** (optional, array, default: `[]`): Array of route names that should be excluded from the password expiration check (useful for logout, password change routes, etc.)
 
+## Password Reset Feature
+
+The bundle provides a complete password reset functionality with customizable email templates.
+
+### Configuration
+
+Add password reset configuration to `config/packages/password_expiration.yaml`:
+
+```yaml
+password_expiration:
+    password_reset:
+        enabled: true
+        token_lifetime: 3600  # Token lifetime in seconds (default: 1 hour)
+        email:
+            from_email: 'noreply@example.com'
+            from_name: 'My Application'
+            subject: 'Reset Your Password'
+            html_template: '@PasswordExpiration/emails/password_reset.html.twig'
+            text_template: '@PasswordExpiration/emails/password_reset.txt.twig'
+```
+
+### Password Reset Configuration Options
+
+- **`enabled`** (boolean, default: `false`): Enable or disable password reset functionality
+- **`token_lifetime`** (integer, default: `3600`): Token lifetime in seconds (minimum: 60)
+- **`email.from_email`** (string, required when enabled): Email address to send reset emails from
+- **`email.from_name`** (string, default: `'Password Reset'`): Name displayed as the sender
+- **`email.subject`** (string, default: `'Password Reset Request'`): Email subject line
+- **`email.html_template`** (string): Path to custom HTML email template
+- **`email.text_template`** (string): Path to custom text email template
+
+### Usage Example
+
+```php
+<?php
+
+namespace App\Controller;
+
+use GillesG\PasswordExpirationBundle\Service\PasswordResetService;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+
+class PasswordResetController extends AbstractController
+{
+    #[Route('/password/reset/request', name: 'app_password_reset_request')]
+    public function requestReset(
+        Request $request,
+        PasswordResetService $resetService
+    ): Response {
+        if ($request->isMethod('POST')) {
+            $email = $request->request->get('email');
+            
+            // Find user by email (adapt to your user repository)
+            $user = $this->getDoctrine()
+                ->getRepository(User::class)
+                ->findOneBy(['email' => $email]);
+            
+            if ($user) {
+                // Generate reset URL
+                $resetUrl = $this->generateUrl(
+                    'app_password_reset_confirm',
+                    [],
+                    UrlGeneratorInterface::ABSOLUTE_URL
+                );
+                
+                // Send reset email
+                $resetService->requestPasswordReset($user, $resetUrl);
+            }
+            
+            // Always show success message (security best practice)
+            $this->addFlash('success', 'If an account with that email exists, a password reset link has been sent.');
+            return $this->redirectToRoute('app_login');
+        }
+        
+        return $this->render('security/reset_request.html.twig');
+    }
+    
+    #[Route('/password/reset/confirm', name: 'app_password_reset_confirm')]
+    public function confirmReset(
+        Request $request,
+        PasswordResetService $resetService,
+        UserPasswordHasherInterface $passwordHasher
+    ): Response {
+        $token = $request->query->get('token');
+        
+        if ($request->isMethod('POST')) {
+            // Validate token
+            $resetToken = $resetService->validateResetToken($token);
+            
+            if (!$resetToken) {
+                $this->addFlash('error', 'Invalid or expired reset token.');
+                return $this->redirectToRoute('app_password_reset_request');
+            }
+            
+            $user = $resetToken->getUser();
+            $newPassword = $request->request->get('password');
+            
+            // Update password
+            $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+            $user->setPassword($hashedPassword);
+            $user->setPasswordUpdatedAt(new \DateTime());
+            
+            // Invalidate the token
+            $resetService->completePasswordReset($resetToken);
+            
+            // Persist changes
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->flush();
+            
+            $this->addFlash('success', 'Your password has been reset successfully!');
+            return $this->redirectToRoute('app_login');
+        }
+        
+        // Validate token for GET request
+        $resetToken = $resetService->validateResetToken($token);
+        if (!$resetToken) {
+            $this->addFlash('error', 'Invalid or expired reset token.');
+            return $this->redirectToRoute('app_password_reset_request');
+        }
+        
+        return $this->render('security/reset_confirm.html.twig', [
+            'token' => $token
+        ]);
+    }
+}
+```
+
+### Customizing Email Templates
+
+The bundle provides default email templates, but you can easily customize them:
+
+1. **Create your custom templates** in your application's `templates/` directory:
+
+```twig
+{# templates/emails/my_custom_reset.html.twig #}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* Your custom styles */
+    </style>
+</head>
+<body>
+    <h1>Custom Password Reset</h1>
+    <p>Hello {{ user.email }},</p>
+    <p>Click here to reset your password:</p>
+    <a href="{{ resetUrl }}">Reset Password</a>
+    <p>This link expires at {{ expiresAt|date('Y-m-d H:i:s') }}.</p>
+</body>
+</html>
+```
+
+```twig
+{# templates/emails/my_custom_reset.txt.twig #}
+Custom Password Reset
+
+Hello {{ user.email }},
+
+Click the link below to reset your password:
+{{ resetUrl }}
+
+This link expires at {{ expiresAt|date('Y-m-d H:i:s') }}.
+```
+
+2. **Update your configuration** to use the custom templates:
+
+```yaml
+password_expiration:
+    password_reset:
+        enabled: true
+        email:
+            from_email: 'noreply@example.com'
+            html_template: 'emails/my_custom_reset.html.twig'
+            text_template: 'emails/my_custom_reset.txt.twig'
+```
+
+### Available Template Variables
+
+The following variables are available in your email templates:
+
+- **`user`**: The user object requesting the password reset
+- **`resetUrl`**: The complete password reset URL with token
+- **`expiresAt`**: DateTime object indicating when the token expires
+
 ## Architecture
 
 The bundle provides a clean separation of concerns:
+
+### Password Expiration Services
 
 - **`PasswordExpirationChecker`** - Service that handles password expiration logic
 - **`PasswordHistoryChecker`** - Service that prevents password reuse using fingerprint technology
 - **`PasswordExpirationListener`** - Event listener that checks requests and triggers redirects
 - **`PasswordExpirationFactory`** - Factory that registers the firewall configuration option
 - **`PasswordExpirationExtension`** - Extension that loads the bundle services
+
+### Password Reset Services
+
+- **`PasswordResetManager`** - Handles secure token generation, validation, and lifecycle management
+- **`PasswordResetService`** - Orchestrates the password reset flow and email sending
+- **`PasswordResetToken`** - Value object representing a password reset token with selector/verifier pattern
 
 ## User Entity Requirements
 
@@ -249,6 +454,36 @@ class PasswordChangeController extends AbstractController
 }
 ```
 
+## Security
+
+### Password Reset Token Security
+
+The password reset feature uses a **selector/verifier pattern** for maximum security:
+
+1. **Cryptographically Secure Generation**: Tokens are generated using `random_bytes()` for cryptographic randomness
+2. **Selector/Verifier Split**: Each token consists of two parts:
+   - **Selector**: Used to look up the token (stored in plain text)
+   - **Verifier**: Used to validate the token (stored as SHA-256 hash)
+3. **Constant-Time Comparison**: Token validation uses `hash_equals()` to prevent timing attacks
+4. **Single Use**: Tokens are automatically invalidated after successful use
+5. **Time-Limited**: Tokens expire after a configurable period (default: 1 hour)
+
+This approach is inspired by security best practices and prevents:
+- Token enumeration attacks
+- Timing attacks
+- Database leakage vulnerabilities
+- Token reuse
+
+### Best Practices
+
+When implementing password reset in your application:
+
+1. **Never Confirm Email Existence**: Always show a success message whether or not the email exists
+2. **Rate Limiting**: Implement rate limiting on the reset request endpoint
+3. **Audit Logging**: Log password reset attempts for security monitoring
+4. **HTTPS Only**: Always use HTTPS in production
+5. **Secure Token Transmission**: Tokens should only be transmitted via secure channels
+
 ## Testing
 
 The bundle includes comprehensive tests:
@@ -300,6 +535,99 @@ Adds a password fingerprint to user's history with automatic rotation.
 - `$passwordHash`: The password hash to add to history
 - `$historyField`: (optional) The field name containing the password history array (default: 'passwordHistory')
 - `$maxHistory`: (optional) Maximum number of passwords to keep in history (default: 5)
+
+## PasswordResetService API Reference
+
+The `PasswordResetService` service provides the following methods:
+
+### `requestPasswordReset(object $user, string $resetUrl): PasswordResetToken`
+
+Initiates a password reset request for a user by generating a token and sending an email.
+
+**Parameters:**
+- `$user`: The user object requesting password reset
+- `$resetUrl`: The base URL for the password reset page (token will be appended as query parameter)
+
+**Returns:** `PasswordResetToken` object
+
+**Example:**
+```php
+$resetUrl = $this->generateUrl('app_password_reset_confirm', [], UrlGeneratorInterface::ABSOLUTE_URL);
+$token = $resetService->requestPasswordReset($user, $resetUrl);
+```
+
+### `validateResetToken(string $tokenString): ?PasswordResetToken`
+
+Validates a password reset token string.
+
+**Parameters:**
+- `$tokenString`: The complete token string in format "selector:verifier"
+
+**Returns:** `PasswordResetToken` object if valid, `null` if invalid or expired
+
+**Example:**
+```php
+$tokenString = $request->query->get('token');
+$resetToken = $resetService->validateResetToken($tokenString);
+
+if ($resetToken === null) {
+    // Token is invalid or expired
+}
+```
+
+### `completePasswordReset(PasswordResetToken $token): void`
+
+Completes the password reset process by invalidating the token.
+
+**Parameters:**
+- `$token`: The validated PasswordResetToken object
+
+**Example:**
+```php
+// After successfully updating the password
+$resetService->completePasswordReset($resetToken);
+```
+
+## PasswordResetManager API Reference
+
+The `PasswordResetManager` service provides low-level token management. Most applications should use `PasswordResetService` instead.
+
+### `generateToken(object $user): PasswordResetToken`
+
+Generates a new password reset token for a user.
+
+**Parameters:**
+- `$user`: The user object
+
+**Returns:** `PasswordResetToken` object
+
+### `validateToken(string $selector, string $verifier): ?PasswordResetToken`
+
+Validates a token using its selector and verifier components.
+
+**Parameters:**
+- `$selector`: The token selector
+- `$verifier`: The token verifier
+
+**Returns:** `PasswordResetToken` object if valid, `null` otherwise
+
+### `getTokenString(PasswordResetToken $token): string`
+
+Converts a token object to a string suitable for URLs.
+
+**Parameters:**
+- `$token`: The PasswordResetToken object
+
+**Returns:** Token string in format "selector:verifier"
+
+### `parseTokenString(string $tokenString): ?array`
+
+Parses a token string into its components.
+
+**Parameters:**
+- `$tokenString`: The token string to parse
+
+**Returns:** Array with 'selector' and 'verifier' keys, or `null` if invalid
 
 ## License
 
